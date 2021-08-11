@@ -374,8 +374,11 @@ func Update(c UpdateConfig) (*unstructured.Unstructured, error) {
 	}
 
 	// Issue patch request.
-	// NOTE: We can use the same client because if the `kind` changes, this will cause
-	// a replace (i.e., destroy and create).
+	// Acquire a new client as we may want to change apiVersion in-place.
+	client, err = c.ClientSet.ResourceClient(c.Inputs.GroupVersionKind(), c.Inputs.GetNamespace())
+	if err != nil {
+		return nil, err
+	}
 	currentOutputs, err := client.Patch(context.TODO(), c.Inputs.GetName(), patchType, patch, options)
 	if err != nil {
 		return nil, err
